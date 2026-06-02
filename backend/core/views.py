@@ -65,16 +65,35 @@ class DailyAttendanceListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """
-        Customizes insertion to auto-inject token-authenticated User as recorder.
-        """
-        # Ensure that teachers/admins don't have to manually pass their own ID in the request body
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        Idempotent update_or_create handler.
+        Allows the client's optimistic UI to send a simple POST payload representing the toggled state.
+        The backend handles both new insertions and dynamic updates for the (student, date) unique set.
         
-        # Auto-inject current authenticated user as marked_by
-        serializer.save(marked_by=request.user)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        Interview Defense:
+        - By using update_or_create instead of a naive create, we decouple frontend toggle state 
+          from whether it's the first click of the day or a modification, enhancing network performance 
+          and eliminating client-side write-versus-update complexity.
+        """
+        student_id = request.data.get('student')
+        date_val = request.data.get('date')
+        status_val = request.data.get('status')
+        
+        if not student_id or not date_val or not status_val:
+            return Response(
+                {"detail": "Missing parameters. 'student', 'date', and 'status' are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        attendance, created = Attendance.objects.update_or_create(
+            student_id=student_id,
+            date=date_val,
+            defaults={'status': status_val, 'marked_by': request.user}
+        )
+        
+        serializer = self.get_serializer(attendance)
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(serializer.data, status=status_code)
+
 
 
 class InvoiceListView(generics.ListAPIView):
@@ -114,3 +133,29 @@ class InvoiceListView(generics.ListAPIView):
 
         # Block any unexpected role access
         return Invoice.objects.none()
+
+
+class StudentListView(generics.ListAPIView):
+    """
+    View to list student profiles.
+    Used by teachers/admins to retrieve the class roster, and parents to view their children.
+    
+    Interview Defense:
+    - Pre-fetches parent User models using select_related('parent') to optimize serialization queries.
+    """
+    serializer_class = StudentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Student.objects.select_related('parent')
+        
+        if user.role == User.Roles.PARENT:
+            return queryset.filter(parent=user)
+            
+        class_param = self.request.query_params.get('class_name')
+        if class_param:
+            queryset = queryset.filter(class_name=class_param)
+            
+        return queryset
+

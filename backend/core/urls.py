@@ -1,7 +1,10 @@
 from django.urls import path
-from .views import DailyAttendanceListView, InvoiceListView
+from .views import DailyAttendanceListView, InvoiceListView, StudentListView
 
 urlpatterns = [
+    # Students List Route
+    path('students/', StudentListView.as_view(), name='student_list'),
+
     # Attendance Route
     # GET: Retrieves daily list (Teacher/Admin reads all; Parent reads child profiles only)
     # POST: Marks attendance (restricted strictly to ADMIN/TEACHER roles)
@@ -11,3 +14,4 @@ urlpatterns = [
     # GET: Retrieves invoice logs (Admin reads all; Parent reads child invoices only)
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
 ]
+
