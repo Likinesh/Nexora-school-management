@@ -1,17 +1,20 @@
 from django.urls import path
-from .views import DailyAttendanceListView, InvoiceListView, StudentListView
+from .views import (
+    DailyAttendanceListView,
+    InvoiceListView,
+    StudentListView,
+    NotificationListView,
+    MarkNotificationsReadView,
+    BulkAttendanceView,
+    BulkStudentCreateView
+)
 
 urlpatterns = [
-    # Students List Route
     path('students/', StudentListView.as_view(), name='student_list'),
-
-    # Attendance Route
-    # GET: Retrieves daily list (Teacher/Admin reads all; Parent reads child profiles only)
-    # POST: Marks attendance (restricted strictly to ADMIN/TEACHER roles)
+    path('students/bulk/', BulkStudentCreateView.as_view(), name='student_bulk_create'),
     path('attendance/', DailyAttendanceListView.as_view(), name='attendance_list'),
-    
-    # Invoices/Fee Ledger Route
-    # GET: Retrieves invoice logs (Admin reads all; Parent reads child invoices only)
+    path('attendance/bulk/', BulkAttendanceView.as_view(), name='attendance_bulk_mark'),
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
+    path('notifications/', NotificationListView.as_view(), name='notification_list'),
+    path('notifications/read-all/', MarkNotificationsReadView.as_view(), name='notifications_mark_read'),
 ]
-

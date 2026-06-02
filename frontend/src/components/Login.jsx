@@ -30,7 +30,6 @@ const Login = () => {
     }
   };
 
-  // Helper shortcut for easy testing and evaluation
   const handleQuickLogin = async (roleName, userVal, passVal) => {
     setError('');
     setLoading(true);
@@ -114,22 +113,11 @@ const Login = () => {
                 disabled={loading}
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {loading ? (
-                  <span class="inline-flex items-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing you in...
-                  </span>
-                ) : (
-                  'Sign In'
-                )}
+                {loading ? 'Signing you in...' : 'Sign In'}
               </button>
             </div>
           </form>
 
-          {/* Quick-Testing Presets Section */}
           <div class="mt-8 border-t border-slate-800 pt-6">
             <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase text-center mb-4">
               Developer Demo Sign In
@@ -160,9 +148,6 @@ const Login = () => {
                 <span>Parent</span>
               </button>
             </div>
-            <p class="text-[10px] text-center text-slate-500 mt-4 leading-normal">
-              Quickly cycle between admin, teacher, or parent contexts. Database will dynamically isolate and optimize data streams accordingly.
-            </p>
           </div>
         </div>
       </div>

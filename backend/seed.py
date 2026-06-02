@@ -2,7 +2,6 @@ import os
 import django
 import json
 
-# Setup django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
@@ -12,20 +11,14 @@ from core.serializers import CustomTokenObtainPairSerializer
 from datetime import date, timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 User = get_user_model()
 
 def seed_data():
-    print("--- Starting Database Seeding ---")
-    
-    # 1. Clean existing database to ensure test reliability
     User.objects.all().delete()
     Student.objects.all().delete()
     Attendance.objects.all().delete()
     Invoice.objects.all().delete()
-    print("Cleared existing records.")
 
-    # 2. Create users with explicit roles
     admin = User.objects.create_superuser(
         username='admin',
         email='admin@edutinker.com',
@@ -34,7 +27,6 @@ def seed_data():
         first_name='System',
         last_name='Admin'
     )
-    print("Created Admin user: admin")
 
     teacher = User.objects.create_user(
         username='teacher',
@@ -44,7 +36,6 @@ def seed_data():
         first_name='Jane',
         last_name='Doe'
     )
-    print("Created Teacher user: teacher")
 
     parent = User.objects.create_user(
         username='parent',
@@ -54,9 +45,7 @@ def seed_data():
         first_name='John',
         last_name='Smith'
     )
-    print("Created Parent user: parent")
 
-    # 3. Create Students and bind them to the parent
     student1 = Student.objects.create(
         first_name='Jimmy',
         last_name='Smith',
@@ -69,9 +58,7 @@ def seed_data():
         parent=parent,
         class_name='Grade 3-B'
     )
-    print(f"Created Students: {student1}, {student2} and linked to parentJohn Smith.")
 
-    # 4. Create initial Attendance records
     Attendance.objects.create(
         student=student1,
         date=date.today(),
@@ -84,9 +71,7 @@ def seed_data():
         status=Attendance.Statuses.ABSENT,
         marked_by=teacher
     )
-    print("Created initial daily attendance records marked by Teacher.")
 
-    # 5. Create school fee Invoices
     Invoice.objects.create(
         student=student1,
         title='Tution Fee - Q2',
@@ -108,28 +93,10 @@ def seed_data():
         due_date=date.today() - timedelta(days=30),
         status=Invoice.Statuses.PAID
     )
-    print("Created initial fee invoices (Pending, Overdue, Paid).")
 
-    print("\n--- Seeding Completed Successfully! ---")
-    
-    # 6. Verification check: Simulate Token generation and display custom claims
-    print("\n--- Verifying Custom JWT Token Claims ---")
     for u in [admin, teacher, parent]:
-        # Using our CustomTokenObtainPairSerializer to verify custom claims are properly injected
         token = CustomTokenObtainPairSerializer.get_token(u)
-        
-        # Access token payloads are readable as a dictionary
         payload = token.payload
-        print(f"\nUser: {u.username} (Role: {u.role})")
-        print(f"Token Payload Claims (to be parsed by React):")
-        print(json.dumps({
-            "user_id": payload.get("user_id"),
-            "username": payload.get("username"),
-            "email": payload.get("email"),
-            "role": payload.get("role"),
-            "exp": payload.get("exp")
-        }, indent=2))
-
 
 if __name__ == '__main__':
     seed_data()

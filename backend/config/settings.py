@@ -2,18 +2,14 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-m(iv4#n=x@21i7u4p(gac#h!q6n9#1!&aef5)p!*a(o8t=0f4^'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -22,17 +18,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third-party utilities
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    
-    # Custom Application Core
     'core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
-    # CorsMiddleware must be loaded before any middleware that generates content (like CommonMiddleware)
     'corsheaders.middleware.CorsMiddleware',
     
     'django.middleware.security.SecurityMiddleware',

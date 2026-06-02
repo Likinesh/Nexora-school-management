@@ -1,24 +1,14 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Student, Attendance, Invoice
+from .models import Student, Attendance, Invoice, Notification
 
 User = get_user_model()
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Subclasses SimpleJWT's TokenObtainPairSerializer to inject role metadata.
-    
-    Interview Defense:
-    - We customize JWT claims. By embedding user info (id, username, email, role) 
-      into the access token, the React client can decode the token (via jwt-decode) 
-      and instantly mount user sessions without executing an expensive GET request 
-      to a /profile/ endpoint, reducing total login latency.
-    """
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        # Add custom claims
         token['username'] = user.username
         token['email'] = user.email
         token['role'] = user.role
@@ -26,7 +16,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
-        # Inject user attributes into the initial HTTP response body for direct access
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
@@ -37,9 +26,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Simple serialization model for User profiles.
-    """
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name']
@@ -47,13 +33,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StudentSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Student database records.
-    
-    Interview Defense:
-    - Includes computed read-only properties for parent profiles to eliminate 
-      the frontend needing to query user endpoints separately.
-    """
     parent_name = serializers.SerializerMethodField(read_only=True)
     parent_email = serializers.EmailField(source='parent.email', read_only=True)
 
@@ -68,16 +47,6 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Attendance model records.
-    
-    Interview Defense:
-    - Design Pattern: Shallow Write, Deep Read.
-    - We take a standard `student` ID for write (POST/PUT) paths to avoid the 
-      complex, error-prone parsing of nested dictionary writes.
-    - We dynamically map to `student_detail` (using StudentSerializer) on read 
-      (GET) paths, returning hydrated details so the client has immediate access.
-    """
     student_detail = StudentSerializer(source='student', read_only=True)
     marked_by_name = serializers.SerializerMethodField(read_only=True)
 
@@ -94,17 +63,16 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Invoice details.
-    
-    Interview Defense:
-    - Employs Shallow Write, Deep Read structure similar to the Attendance serializer.
-    - Serves student demographic details within nested data streams so fee ledgers 
-      can render student identification parameters seamlessly without separate requests.
-    """
     student_detail = StudentSerializer(source='student', read_only=True)
 
     class Meta:
         model = Invoice
         fields = ['id', 'student', 'student_detail', 'title', 'amount', 'due_date', 'status']
         read_only_fields = ['id']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'message', 'created_at', 'is_read']
+        read_only_fields = ['id', 'created_at']

@@ -4,18 +4,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 class User(AbstractUser):
-    """
-    Custom user model extending Django's AbstractUser to implement role-based access.
-    
-    Roles supported:
-    - ADMIN: Full system administration and data management capabilities.
-    - TEACHER: Can view, mark, and modify attendance.
-    - PARENT: Can view attendance and invoices for their registered children.
-    
-    Interview Defense:
-    - We index the `role` field since role-based access control (RBAC) and permissions 
-      checks are run on almost every API request, reducing query evaluation costs.
-    """
     class Roles(models.TextChoices):
         ADMIN = 'ADMIN', 'Admin'
         TEACHER = 'TEACHER', 'Teacher'
@@ -31,17 +19,7 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.role})"
 
-
 class Student(models.Model):
-    """
-    Student model containing student details and referencing a PARENT User.
-    
-    Interview Defense:
-    - We use `limit_choices_to` on the parent field to restrict selection to Parents in the Django Admin.
-    - We write custom clean() validation to strictly enforce at the application layer that the parent 
-      user profile actually belongs to a Parent user.
-    - We add a database-index on `class_name` because filtering by class is highly standard for daily class lists.
-    """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     parent = models.ForeignKey(
@@ -54,9 +32,8 @@ class Student(models.Model):
 
     def clean(self):
         super().clean()
-        # Application-layer integrity: enforce that the selected parent has the PARENT role.
         if self.parent and self.parent.role != User.Roles.PARENT:
-            raise ValidationError({'parent': "Only users with PARENT role can be assigned as parents."})
+            raise ValidationError({'parent': "Only users with PARENT role can be assigned."})
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -67,15 +44,6 @@ class Student(models.Model):
 
 
 class Attendance(models.Model):
-    """
-    Attendance records mapping students to dates and marking states (PRESENT/ABSENT).
-    
-    Interview Defense:
-    - UniqueConstraint is defined on (student, date) to prevent duplicate daily tracking records 
-      for a student, guaranteeing consistency at the database level.
-    - Index on `date` is critical since queries for active classroom lists or history will 
-      frequently filter and sort by date, accelerating API latency.
-    """
     class Statuses(models.TextChoices):
         PRESENT = 'PRESENT', 'Present'
         ABSENT = 'ABSENT', 'Absent'
@@ -86,10 +54,7 @@ class Attendance(models.Model):
         related_name='attendances'
     )
     date = models.DateField(db_index=True)
-    status = models.CharField(
-        max_length=10,
-        choices=Statuses.choices
-    )
+    status = models.CharField(max_length=10, choices=Statuses.choices)
     marked_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -111,18 +76,6 @@ class Attendance(models.Model):
 
 
 class Invoice(models.Model):
-    """
-    Invoice model representing school fees associated with a particular student.
-    
-    Statuses:
-    - PAID: Fully settled.
-    - PENDING: Awaiting payment.
-    - OVERDUE: Outstanding payment beyond due date.
-    
-    Interview Defense:
-    - High-frequency lookups by invoice status and due_date justify indexing, which accelerates 
-      reports compiling aggregate balances or collecting outstanding items.
-    """
     class Statuses(models.TextChoices):
         PAID = 'PAID', 'Paid'
         PENDING = 'PENDING', 'Pending'
@@ -148,3 +101,21 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.student}: {self.amount} ({self.status})"
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        db_index=True
+    )
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Alert for {self.user.username}: {self.message[:40]}"
