@@ -21,16 +21,25 @@ def seed_data():
 
     admin = User.objects.create_superuser(
         username='admin',
-        email='admin@edutinker.com',
+        email='admin@nexora.com',
         password='adminpassword',
         role=User.Roles.ADMIN,
         first_name='System',
         last_name='Admin'
     )
 
+    User.objects.create_superuser(
+        username='user',
+        email='user@nexora.com',
+        password='user',
+        role=User.Roles.ADMIN,
+        first_name='Admin',
+        last_name='User'
+    )
+
     teacher = User.objects.create_user(
         username='teacher',
-        email='teacher@edutinker.com',
+        email='teacher@nexora.com',
         password='teacherpassword',
         role=User.Roles.TEACHER,
         first_name='Jane',
@@ -39,7 +48,7 @@ def seed_data():
 
     parent = User.objects.create_user(
         username='parent',
-        email='parent@edutinker.com',
+        email='parent@nexora.com',
         password='parentpassword',
         role=User.Roles.PARENT,
         first_name='John',
