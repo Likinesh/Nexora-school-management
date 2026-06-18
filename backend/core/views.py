@@ -1,11 +1,11 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from .models import Student, Attendance, Invoice, Notification, Classroom, PaymentAttempt
+from .models import Student, Attendance, Invoice, Notification, Classroom, PaymentAttempt, Announcement
 from .serializers import (
     CustomTokenObtainPairSerializer,
     StudentSerializer,
@@ -14,6 +14,8 @@ from .serializers import (
     NotificationSerializer,
     ClassroomSerializer,
     PaymentAttemptSerializer,
+    UserSerializer,
+    AnnouncementSerializer,
 )
 from .permissions import IsTeacherOrAdmin, IsAdmin
 
@@ -482,3 +484,47 @@ class ParentCreateAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"detail": f"Failed to create parent/student: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TeacherListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.Roles.TEACHER)
+
+
+class AnnouncementListCreateView(generics.ListCreateAPIView):
+    serializer_class = AnnouncementSerializer
+
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.IsAuthenticated()]
+        return [IsTeacherOrAdmin()]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Announcement.objects.select_related('classroom', 'author').all()
+
+        if user.role == User.Roles.PARENT:
+            class_names = Student.objects.filter(parent=user).values_list('class_name', flat=True)
+            from django.db.models import Q
+            return queryset.filter(Q(classroom__isnull=True) | Q(classroom__class_name__in=class_names))
+
+        elif user.role == User.Roles.TEACHER:
+            from django.db.models import Q
+            return queryset.filter(Q(classroom__isnull=True) | Q(classroom__teacher=user))
+
+        return queryset
+
+    def perform_create(self, serializer):
+        classroom_id = self.request.data.get('classroom')
+        if classroom_id and self.request.user.role == User.Roles.TEACHER:
+            try:
+                classroom = Classroom.objects.get(id=classroom_id)
+                if classroom.teacher_id != self.request.user.id:
+                    raise exceptions.PermissionDenied("You are not the assigned teacher for this classroom.")
+            except Classroom.DoesNotExist:
+                raise exceptions.ValidationError({"classroom": "Classroom not found."})
+
+        serializer.save(author=self.request.user)

@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-
 class User(AbstractUser):
     class Roles(models.TextChoices):
         ADMIN = 'ADMIN', 'Admin'
@@ -20,7 +19,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
-
 
 class Student(models.Model):
     first_name = models.CharField(max_length=100)
@@ -46,7 +44,6 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.class_name})"
 
-
 class Classroom(models.Model):
     name = models.CharField(max_length=100, unique=True)
     teacher = models.ForeignKey(
@@ -65,7 +62,6 @@ class Classroom(models.Model):
     def __str__(self):
         teacher_name = self.teacher.username if self.teacher else "Unassigned"
         return f"{self.name} — {self.class_name} ({teacher_name})"
-
 
 class Attendance(models.Model):
     class Statuses(models.TextChoices):
@@ -105,7 +101,6 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.student} - {self.date}: {self.status}"
 
-
 class Invoice(models.Model):
     class Statuses(models.TextChoices):
         PAID = 'PAID', 'Paid'
@@ -134,7 +129,6 @@ class Invoice(models.Model):
     def __str__(self):
         return f"{self.title} - {self.student}: {self.amount} ({self.status})"
 
-
 class PaymentAttempt(models.Model):
     class Statuses(models.TextChoices):
         SUCCESS = 'SUCCESS', 'Success'
@@ -161,20 +155,17 @@ class PaymentAttempt(models.Model):
     def __str__(self):
         return f"Payment {self.amount_paid} on Invoice #{self.invoice_id} [{self.status}]"
 
-
 class TeacherUser(User):
     class Meta:
         proxy = True
         verbose_name = 'Teacher'
         verbose_name_plural = 'Teachers'
 
-
 class ParentUser(User):
     class Meta:
         proxy = True
         verbose_name = 'Parent'
         verbose_name_plural = 'Parents'
-
 
 class Notification(models.Model):
     user = models.ForeignKey(
@@ -192,3 +183,27 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Alert for {self.user.username}: {self.message[:40]}"
+
+class Announcement(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    classroom = models.ForeignKey(
+        Classroom,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='announcements'
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='announcements'
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        scope = self.classroom.name if self.classroom else "School-wide"
+        return f"[{scope}] {self.title} by {self.author.username}"

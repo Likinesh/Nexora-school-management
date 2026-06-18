@@ -4,6 +4,8 @@ import Login from './components/Login';
 import AttendanceTracker from './components/AttendanceTracker';
 import FeeLedger from './components/FeeLedger';
 import UserManagement from './components/UserManagement';
+import ClassroomManager from './components/ClassroomManager';
+import BulletinBoard from './components/BulletinBoard';
 import apiClient from './services/api';
 
 function NotifBell({ count, onClick }) {
@@ -50,7 +52,9 @@ function NotifDropdown({ items, onMarkRead }) {
 
 function Sidebar({ active, setActive, role }) {
   const items = [];
+  items.push({ key: 'bulletin', icon: '📢', label: 'Bulletin Feed' });
   items.push({ key: 'attendance', icon: '📝', label: 'Attendance' });
+  if (role !== 'PARENT') items.push({ key: 'classrooms', icon: '🏫', label: 'Classrooms' });
   if (role !== 'TEACHER') items.push({ key: 'invoices', icon: '💳', label: 'Fee Ledger' });
   if (role === 'ADMIN') items.push({ key: 'users', icon: '👥', label: 'User Hub' });
 
@@ -76,8 +80,7 @@ function Sidebar({ active, setActive, role }) {
 
 function DashboardContent() {
   const { user, logout } = useAuth();
-  const defaultTab = user?.role === 'PARENT' ? 'invoices' : 'attendance';
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState('bulletin');
   const [notifs, setNotifs] = useState([]);
   const [showDrop, setShowDrop] = useState(false);
 
@@ -140,7 +143,9 @@ function DashboardContent() {
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
         <Sidebar active={activeTab} setActive={setActiveTab} role={user?.role} />
         <main className="flex-1 min-w-0 bg-slate-900/20 border border-slate-800/50 rounded-2xl p-6 shadow-sm min-h-[500px]">
+          {activeTab === 'bulletin' && <BulletinBoard />}
           {activeTab === 'attendance' && <AttendanceTracker />}
+          {activeTab === 'classrooms' && user?.role !== 'PARENT' && <ClassroomManager />}
           {activeTab === 'invoices' && user?.role !== 'TEACHER' && <FeeLedger />}
           {activeTab === 'users' && user?.role === 'ADMIN' && <UserManagement />}
         </main>

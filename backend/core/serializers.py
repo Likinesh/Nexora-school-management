@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Student, Attendance, Invoice, Notification, Classroom, PaymentAttempt
+from .models import Student, Attendance, Invoice, Notification, Classroom, PaymentAttempt, Announcement
 
 User = get_user_model()
 
@@ -120,3 +120,21 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ['id', 'user', 'message', 'created_at', 'is_read']
         read_only_fields = ['id', 'created_at']
+
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField(read_only=True)
+    classroom_name = serializers.CharField(source='classroom.name', read_only=True, default="School-wide")
+    classroom_class_name = serializers.CharField(source='classroom.class_name', read_only=True, default=None)
+
+    class Meta:
+        model = Announcement
+        fields = [
+            'id', 'title', 'content', 'classroom', 'classroom_name',
+            'classroom_class_name', 'author', 'author_name', 'created_at'
+        ]
+        read_only_fields = ['id', 'author', 'created_at']
+
+    def get_author_name(self, obj):
+        full_name = f"{obj.author.first_name} {obj.author.last_name}".strip()
+        return full_name if full_name else obj.author.username

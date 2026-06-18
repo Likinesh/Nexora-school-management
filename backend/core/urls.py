@@ -12,6 +12,8 @@ from .views import (
     PaymentAttemptCreateView,
     TeacherCreateAPIView,
     ParentCreateAPIView,
+    TeacherListView,
+    AnnouncementListCreateView,
 )
 
 urlpatterns = [
@@ -27,4 +29,6 @@ urlpatterns = [
     path('notifications/read-all/', MarkNotificationsReadView.as_view(), name='notifications_mark_read'),
     path('users/create-teacher/', TeacherCreateAPIView.as_view(), name='user_create_teacher'),
     path('users/create-parent/', ParentCreateAPIView.as_view(), name='user_create_parent'),
+    path('users/teachers/', TeacherListView.as_view(), name='teacher_list'),
+    path('announcements/', AnnouncementListCreateView.as_view(), name='announcement_list_create'),
 ]

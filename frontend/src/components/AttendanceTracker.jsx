@@ -214,8 +214,19 @@ const AttendanceTracker = () => {
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Classroom</label>
               <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white">
-                <option value="Grade 5-A">Grade 5-A (Primary)</option>
-                <option value="Grade 3-B">Grade 3-B (Secondary)</option>
+                <option value="Kindergarten">Kindergarten</option>
+                <option value="Grade 1-A">Grade 1 - Section A</option>
+                <option value="Grade 2-A">Grade 2 - Section A</option>
+                <option value="Grade 3-A">Grade 3 - Section A</option>
+                <option value="Grade 4-A">Grade 4 - Section A</option>
+                <option value="Grade 5-A">Grade 5 - Section A (Primary)</option>
+                <option value="Grade 6-B">Grade 6 - Section B (Middle School)</option>
+                <option value="Grade 7-B">Grade 7 - Section B (Middle School)</option>
+                <option value="Grade 8-B">Grade 8 - Section B (Middle School)</option>
+                <option value="Grade 9-H">Grade 9 - Freshman (High School)</option>
+                <option value="Grade 10-H">Grade 10 - Sophomore (High School)</option>
+                <option value="Grade 11-AP">Grade 11 - Junior (AP Honors)</option>
+                <option value="Grade 12-AP">Grade 12 - Senior (AP Honors)</option>
               </select>
             </div>
             <div>

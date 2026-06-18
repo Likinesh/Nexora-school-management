@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models import User, Student, Attendance, Invoice, Classroom, PaymentAttempt, TeacherUser, ParentUser
+from .models import User, Student, Attendance, Invoice, Classroom, PaymentAttempt, TeacherUser, ParentUser, Announcement
 
 admin.site.site_header = "Nexora School Platform"
 admin.site.site_title = "Nexora"
@@ -123,3 +123,4 @@ class StudentAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'parent__username']
 
 admin.site.register(Attendance)
+admin.site.register(Announcement)
